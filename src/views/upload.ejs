@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Upload Video</title>
+</head>
+<body>
+    <h1>Upload a Video</h1>
+    <form id="uploadForm">
+        <input type="file" id="fileInput" accept="video/*" required />
+        <button type="submit">Upload</button>
+    </form>
+
+    <p id="status"></p>
+
+    <script>
+        const form = document.getElementById('uploadForm');
+        const fileInput = document.getElementById('fileInput');
+        const status = document.getElementById('status');
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const file = fileInput.files[0];
+            if (!file) return;
+
+            status.textContent = 'Requesting upload URL...';
+
+            try {
+                const response = await fetch('/admin/upload/', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        filename: file.name,
+                        contentType: file.type,
+                    }),
+                });
+
+                const { url } = await response.json();
+                status.textContent = 'Uploading...';
+
+                const uploadRes = await fetch(url, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': file.type },
+                    body: file,
+                });
+
+                if (uploadRes.ok) {
+                    status.textContent = 'Upload successful !';
+                } else {
+                    throw new Error('Upload failed');
+                }
+            } catch (err) {
+                console.error(err);
+                status.textContent = 'Error uploading file !';
+            }
+        });
+    </script>
+</body>
+</html>
